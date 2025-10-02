@@ -79,3 +79,9 @@ end
 - Full — everything is replaced with [FILTERED]
 - Partial — part of the value is preserved
 - Hash — replaced with SHA256 hash
+
+
+## Authors
+
+- [Valeriya Petrova](https://github.com/piatrova-valeriya1999)
+- [Tavrel Kate](https://github.com/tavrelkate)
