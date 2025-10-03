@@ -1,20 +1,12 @@
 
 # Sentinel 🔒
 
-> A Ruby/Rails library for **scrubbing and masking sensitive data** (PII, PCI, HIPAA, secrets, infra) in logs, models, and app payloads.
+A Ruby library for **masking sensitive data** (PII, PCI, HIPAA, secrets, infra).
 
 <p align="center">
   <img alt="Ruby" src="https://www.ruby-lang.org/images/header-ruby-logo.png" height="44" />
   &nbsp;&nbsp;&nbsp;&nbsp;
   <img alt="Ruby on Rails" src="https://raw.githubusercontent.com/rails/website/main/assets/images/logo.svg" height="44" />
-</p>
-
-<p align="center">
-  <a href="#"><img alt="Gem Version" src="https://img.shields.io/badge/gem-sentinel-informational"></a>
-  <a href="#"><img alt="Build Status" src="https://img.shields.io/badge/build-passing-success"></a>
-  <a href="#"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue"></a>
-  <img alt="Ruby badge" src="https://img.shields.io/badge/Ruby-3.3%2B-CC342D?logo=ruby&logoColor=white" />
-  <img alt="Rails badge" src="https://img.shields.io/badge/Rails-7.x-CC0000?logo=rubyonrails&logoColor=white" />
 </p>
 
 ---
