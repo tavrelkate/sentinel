@@ -1,3 +1,6 @@
+<p align="center">
+  <img src="docs/images/logo.png" alt="Sentiel Gem" width="200">
+</p>
 
 # Sentinel 🔒
 
