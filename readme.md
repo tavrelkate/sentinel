@@ -4,9 +4,17 @@
 > A Ruby/Rails library for **scrubbing and masking sensitive data** (PII, PCI, HIPAA, secrets, infra) in logs, models, and app payloads.
 
 <p align="center">
+  <img alt="Ruby" src="https://www.ruby-lang.org/images/header-ruby-logo.png" height="44" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img alt="Ruby on Rails" src="https://raw.githubusercontent.com/rails/website/main/assets/images/logo.svg" height="44" />
+</p>
+
+<p align="center">
   <a href="#"><img alt="Gem Version" src="https://img.shields.io/badge/gem-sentinel-informational"></a>
   <a href="#"><img alt="Build Status" src="https://img.shields.io/badge/build-passing-success"></a>
   <a href="#"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue"></a>
+  <img alt="Ruby badge" src="https://img.shields.io/badge/Ruby-3.3%2B-CC342D?logo=ruby&logoColor=white" />
+  <img alt="Rails badge" src="https://img.shields.io/badge/Rails-7.x-CC0000?logo=rubyonrails&logoColor=white" />
 </p>
 
 ---
@@ -54,8 +62,7 @@ bundle install
 
 ---
 
-## ⚡ Quick Start
-
+## <img alt="Ruby" src="https://www.ruby-lang.org/images/header-ruby-logo.png" height="20" /> Quick Ruby Start
 Create a simple initializer (e.g. `config/initializers/sentinel.rb`):
 
 ```ruby
@@ -76,8 +83,7 @@ Sentinel::Data.new(data)
 
 ---
 
-## 🧰 Rails Integration
-
+##  <img alt="Ruby on Rails" src="https://raw.githubusercontent.com/rails/website/main/assets/images/logo.svg" height="20" /> Rails Integration
 There are **two ways** to enable masked logging in Rails.
 
 ### Option 1 — Quick (via Railtie)
@@ -92,6 +98,21 @@ Rails.application.configure do
 end
 ```
 
+**Pick formatter class (optional)**
+```ruby
+# config/environments/development.rb
+Rails.application.configure do
+  config.sentinel.formatter_class = Sentinel::Plugins::Rails::LogFormatter
+end
+```
+
+**Result**
+Any Rails log line will be scrubbed, e.g.:
+```ruby
+Rails.logger.info(email: "user@example.com", ok: true)
+# => {"email":"[FILTERED]","ok":true}
+```
+
 ---
 
 ### Option 2 — Manual (no Railtie)
@@ -101,14 +122,18 @@ Set the formatter yourself in an environment file or initializer.
 ```ruby
 # config/environments/development.rb
 Rails.application.configure do
-  # Other configs
-
   formatter = Sentinel::Plugins::Rails::LogFormatter.new
+
+  base = ActiveSupport::Logger.new($stdout) # or a file
+  base.level = Logger::DEBUG
+  base.formatter = formatter
+
+  config.logger = ActiveSupport::TaggedLogging.new(base)
   config.log_formatter = formatter
 end
 ```
 
-### **Rails Logs**
+**Result**
 ```ruby
 Rails.logger.info(email: "user@example.com", ok: true)
 # => {"email":"[FILTERED]","ok":true}
