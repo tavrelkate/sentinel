@@ -5,27 +5,27 @@ require "digest"
 module Sentinel
   class Mask
     MODES = %i[full partial hash].freeze
-    DEFAULT_PATTERN = "[FILTERED]".freeze
+    DEFAULT_PLACEHOLDER = "[FILTERED]".freeze
 
     def self.available_modes
       MODES
     end
 
-    attr_reader :mode, :pattern
+    attr_reader :mode, :placeholder
 
-    def initialize(mode = :full, pattern = DEFAULT_PATTERN)
+    def initialize(mode = :full, placeholder = DEFAULT_PLACEHOLDER)
       unless MODES.include?(mode)
-        raise ArgumentError, "Invalid mode: #{mode.inspect}"
+        raise ArgumentError, "invalid mode: #{mode.inspect}"
       end
 
       @mode     = mode
-      @pattern = pattern
+      @placeholder = placeholder
     end
 
     def hide(value)
       case mode
       when :full
-        pattern
+        placeholder
       when :partial
         partial_hide(value)
       when :hash
@@ -38,9 +38,9 @@ module Sentinel
     private
 
     def partial_hide(value)
-      return pattern if value.empty?
+      return placeholder if value.empty?
 
-      "#{value[0, 2]}#{pattern}#{value[-2, 2]}"
+      "#{value[0, 2]}#{placeholder}#{value[-2, 2]}"
     end
   end
 end

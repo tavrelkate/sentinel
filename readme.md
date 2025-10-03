@@ -1,16 +1,40 @@
 
 # Sentinel 🔒
 
-> A Ruby/Rails library for scrubbing and masking sensitive data (PII, PCI, HIPAA, secrets, infra) in logs, models, and applications.
+> A Ruby/Rails library for **scrubbing and masking sensitive data** (PII, PCI, HIPAA, secrets, infra) in logs, models, and app payloads.
+
+<p align="center">
+  <a href="#"><img alt="Gem Version" src="https://img.shields.io/badge/gem-sentinel-informational"></a>
+  <a href="#"><img alt="Build Status" src="https://img.shields.io/badge/build-passing-success"></a>
+  <a href="#"><img alt="License" src="https://img.shields.io/badge/license-MIT-blue"></a>
+</p>
+
+---
+
+## Table of Contents
+
+- [Features](#-features)
+- [Installation](#-installation)
+- [Quick Start](#-quick-start)
+- [Rails Integration](#-rails-integration)
+- [Configuration](#-configuration)
+- [Policies](#-policies)
+  - [Custom Policies](#-custom-policies)
+- [Masking Strategies](#-masking-strategies)
+- [Troubleshooting](#-troubleshooting)
+- [Contributing](#-contributing)
+- [Authors](#-authors)
+- [License](#-license)
 
 ---
 
 ## ✨ Features
 
-- Mask sensitive data such as emails, SSNs, tokens, credit cards, IP addresses, and more
-- Supports modular **policies** (`:pii`, `:pci`, `:hipaa`, `:infra`, `:secrets`)
+- Masks common sensitive fields: emails, SSNs, tokens, credit cards, IPs, and more
+- Modular **policies** you can enable/disable (`:pii`, `:pci`, `:hipaa`, `:gdpr`, `:infra`, `:secrets`)
 - Pluggable **masking modes**: `:full`, `:partial`, `:hash`
-- Clean Ruby API (`Sentinel::Data.new(data)`)
+- Clean, minimal API (`Sentinel::Data.new(data)`)
+- **Rails formatter** for safe application logs
 
 ---
 
@@ -23,65 +47,215 @@ gem "sentinel"
 ```
 
 Then install:
+
 ```bash
 bundle install
 ```
 
+---
+
+## ⚡ Quick Start
+
+Create a simple initializer (e.g. `config/initializers/sentinel.rb`):
+
+```ruby
+Sentinel.configure do |c|
+  c.policy = :pii
+  # c.mask = Sentinel::Mask.new(:full, "[FILTERED]") # optional; see strategies below
+end
+```
+
+Mask a payload:
+
+```ruby
+data = { email: "user@example.com" }
+
+Sentinel::Data.new(data)
+#=> { email: "[FILTERED]" }
+```
+
+---
+
+## 🧰 Rails Integration
+
+There are **two ways** to enable masked logging in Rails.
+
+### Option 1 — Quick (via Railtie)
+
+Sentinel provides a Railtie that installs a log formatter which masks sensitive values.
+
+**Enable/disable**
+```ruby
+# config/environments/development.rb (or any env)
+Rails.application.configure do
+  config.sentinel.enable_log_formatter = true  # set to false to disable
+end
+```
+
+---
+
+### Option 2 — Manual (no Railtie)
+
+Set the formatter yourself in an environment file or initializer.
+
+```ruby
+# config/environments/development.rb
+Rails.application.configure do
+  # Other configs
+
+  formatter = Sentinel::Plugins::Rails::LogFormatter.new
+  config.log_formatter = formatter
+end
+```
+
+### **Rails Logs**
+```ruby
+Rails.logger.info(email: "user@example.com", ok: true)
+# => {"email":"[FILTERED]","ok":true}
+```
+
+---
 
 ## ⚙️ Configuration
 
-Configure once, usually in config/initializers/sentinel.rb:
+Configure once, usually in `config/initializers/sentinel.rb`:
 
 ```ruby
 Sentinel.configure do |c|
-  c.policy :pii
+  c.policy = :pii
+  c.mask   = Sentinel::Mask.new(:partial, "***")
 end
 ```
 
+> Tip: Policies determine **what** gets masked; Masks determine **how** it looks.
 
-## ⚡ Policies
+---
 
-Sentinel supports modular policies for compliance domains:
+## 📜 Policies
+
+Policies define **what** gets masked.
+
+Enable PII protection:
 
 ```ruby
-
 Sentinel.configure do |c|
-  c.policy :pii
+  c.policy = :pii
 end
 ```
 
-Available built-in policies:
+List all available policies:
 
-- :pii – emails, phones, addresses, SSNs
-- :pci – credit cards, CVV
-- :hipaa – patient IDs, diagnoses
-- :infra – IPs, MAC addresses, hostnames
-- :secrets – tokens, keys, passwords
-
-
-### 📦 Custom Policies
-
-You can define your own policy:
 ```ruby
-Sentinel::Policy.define :my_app do
-  label "My App Sensetive Data Policy"
-  keywords "api_key", "auth_token"
-  regexes  /\b\d{16}\b/ # credit card numbers
+Sentinel::Policy.all
+```
+
+Example output:
+
+```ruby
+# :pii=>#<Sentinel::Policy name=:pii label="Personally Identifiable Information (PII)" keywords=7 regexes=5>,
+# :pci=>#<Sentinel::Policy name=:pci label="Payment Card Industry (PCI)" keywords=3 regexes=3>,
+# :hipaa=>#<Sentinel::Policy name=:hipaa label="Health Insurance Portability and Accountability Act (HIPAA)" keywords=3 regexes=1>,
+# :gdpr=>#<Sentinel::Policy name=:gdpr label="General Data Protection Regulation (GDPR)" keywords=4 regexes=4>,
+# :infra=>#<Sentinel::Policy name=:infra label="Infrastructure secrets & identifiers" keywords=8 regexes=5>,
+# :secrets=>#<Sentinel::Policy name=:secrets label="Application Secrets" keywords=... regexes=...>
+```
+
+Peek into a policy:
+
+```ruby
+Sentinel::Policy.all[:pii].keywords
+#=> ["user", "client", "card", "phone", "email", "address", "ssn"]
+
+Sentinel::Policy.all[:pii].regexes
+#=> [/\b\w+.../, /\b(?:\+\d{1,2}\s)?\(?\d{3}\).../, ...]
+```
+
+### 🧩 Custom Policies
+
+Describe your own policy with a DSL:
+
+```ruby
+Sentinel::Policy.describe :checkout_pci_strict do
+  label   "Checkout PCI (Strict)"
+  keywords "card_number", "cvv", "expiry", "name_on_card"
+  regexes  %r{\b(?:\d[ -]?){16}\b}
 end
 
 Sentinel.configure do |c|
-  c.policy :my_app
+  c.policy = :checkout_pci_strict
 end
 ```
+
+---
 
 ## 🔑 Masking Strategies
 
-- Full — everything is replaced with [FILTERED]
-- Partial — part of the value is preserved
-- Hash — replaced with SHA256 hash
+Strategies define **how** values are transformed.
 
+### 1) Full — replace the entire value
 
-## Authors
+```ruby
+Sentinel.configure do |c|
+  c.mask = Sentinel::Mask.new(:full, "[FILTERED]")
+end
+
+Sentinel::Data.new(email: "user@example.com")
+#=> { email: "[FILTERED]" }
+```
+
+### 2) Partial — preserve a small, non-sensitive slice
+
+```ruby
+Sentinel.configure do |c|
+  c.mask = Sentinel::Mask.new(:partial, "***")
+end
+
+Sentinel::Data.new(email: "user@example.com")
+#=> { email: "us***om" }
+```
+
+### 3) Hash — replace with a deterministic SHA-256 hash
+
+```ruby
+Sentinel.configure do |c|
+  c.mask = Sentinel::Mask.new(:hash, :sha256)
+end
+
+Sentinel::Data.new(email: "user@example.com")
+#=> { email: "b4c9a289323b21a01c3e940f150eb9b8c542587f1abfd8f0e1cc1ffc5e475514" }
+```
+
+---
+
+## 🛠 Troubleshooting
+
+- **“It didn’t mask a field I expected.”**
+  - Check the active policy (`Sentinel::Policy.all[...]`) and its `keywords`/`regexes`.
+  - Add a custom policy or extend an existing one.
+
+- **“The mask output looks odd.”**
+  - Confirm your configured mask strategy and placeholder (e.g., `"[FILTERED]"` vs `"***"`).
+
+- **“I need to keep some signal.”**
+  - Use `:partial` or `:hash` instead of `:full`.
+
+---
+
+## 🤝 Contributing
+
+Bug reports and pull requests are welcome! Please:
+1. Open an issue describing the problem or proposal.
+2. Include minimal repro steps or failing tests where possible.
+
+---
+
+## 👩‍💻 Authors
 
 - [Valeriya Petrova](https://github.com/piatrova-valeriya1999)
 - [Tavrel Kate](https://github.com/tavrelkate)
+
+---
+
+## License
+
+The gem is available as open source under the terms of the [MIT License](http://opensource.org/licenses/MIT).

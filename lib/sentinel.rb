@@ -16,7 +16,10 @@ require_relative "sentinel/adapters/string"
 require_relative "sentinel/extensions/patterns"
 require_relative "sentinel/extensions/policies"
 
-
+if defined?(Rails)
+  require_relative "sentinel/plugins/rails/log_formatter"
+  require_relative "sentinel/plugins/rails/railtie.rb"
+end
 
 module Sentinel
   class << self
@@ -25,7 +28,7 @@ module Sentinel
     end
 
     def configuration
-      @configuration ||=Configuration.new
+      @configuration ||= Configuration.new
     end
 
     def policies

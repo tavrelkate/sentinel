@@ -16,7 +16,15 @@ module Sentinel
 
         def keywords(*list) = @keywords.concat(list.flatten)
         def regexes(*list)  = @regexes.concat(list.flatten)
-        def label(text = nil) = @label = text
+        def label(text = nil)
+          if text
+            @label = text
+          else
+            @label
+          end
+        end
+        alias_method :description, :label
+
         alias_method :description, :label
       end
 

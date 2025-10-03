@@ -2,7 +2,13 @@
 
 module Sentinel
   class Data
-    Adapter = ->(klass) { Sentinel::Adapters.const_get(klass.name) }
+    Adapter = ->(klass) do
+      if klass <= Exception
+        Sentinel::Adapters::Exception
+      else
+        Sentinel::Adapters.const_get(klass.name)
+      end
+    end
 
     def self.new(raw_data)
       instance = allocate
@@ -17,7 +23,7 @@ module Sentinel
     end
 
     def scrubbed
-      Adapter(@raw_data.class).new(@raw_data).result
+      Adapter.(@raw_data.class).new(@raw_data).result
     rescue NameError
       Warning.warn "[Sentinel] unsupportable data type: #{@raw_data.class}\n"
       @raw_data
