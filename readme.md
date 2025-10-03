@@ -1,18 +1,11 @@
 <p align="center">
-  <img src="docs/images/logo.png" alt="Sentiel Gem" width="200">
+  <img src="https://raw.githubusercontent.com/tavrelkate/sentinel/main/docs/images/logo.png"
+       alt="Sentinel Gem" width="200">
 </p>
 
 # Sentinel 🔒
+A Ruby library for masking sensitive data (PII, PCI, HIPAA, secrets, infra).
 
-A Ruby library for **masking sensitive data** (PII, PCI, HIPAA, secrets, infra).
-
-<p align="center">
-  <img alt="Ruby" src="https://www.ruby-lang.org/images/header-ruby-logo.png" height="44" />
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img alt="Ruby on Rails" src="https://raw.githubusercontent.com/rails/website/main/assets/images/logo.svg" height="44" />
-</p>
-
----
 
 ## Table of Contents
 
